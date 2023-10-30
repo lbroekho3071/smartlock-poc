@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smartlock</title>
+</head>
+<body>
+
+<script>
+    let state = 1;
+
+    let statusText;
+    let button;
+
+    document.addEventListener("DOMContentLoaded", () => {
+        statusText = document.getElementById("status");
+        button = document.getElementById("button");
+
+        button.addEventListener("click", () => updateState())
+
+        void getState();
+
+        setInterval(() => {
+            void getState();
+        }, 500)
+    })
+
+    async function getState() {
+        const result = await fetch("/api/state", {
+            method: "GET"
+        });
+
+        const body = await result.json();
+
+        state = body.state;
+        button.disabled = state === 0;
+
+        switch (state) {
+            case 0:
+                statusText.textContent = "niet bereikbaar";
+                button.textContent = "Ontgrendel";
+                break;
+            case 1:
+                statusText.textContent = "geopend";
+                button.textContent = "Vergrendel";
+                break;
+            case 2:
+                statusText.textContent = "gesloten";
+                button.textContent = "Ontgrendel";
+                break;
+        }
+    }
+
+    async function updateState() {
+        const response = await fetch("/api/change", {
+            method: "PATCH"
+        });
+
+        if (response.status === 200) {
+            await getState();
+        }
+    }
+</script>
+
+<p>Status: <span id="status"></span></p>
+<button id="button">
+    Ontgrendel
+</button>
+</body>
+</html>
